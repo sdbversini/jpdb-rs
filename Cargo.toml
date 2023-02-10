@@ -1,0 +1,11 @@
+[package]
+name = "jpdb"
+version = "0.1.0"
+edition = "2021"
+description = "Wrapper for jpdb.io's API"
+homepage = "https://www.jpdb.io/"
+repository = "https://github.com/sdbversini/jpdb-rs"
+license = "MIT OR Apache-2.0"
+categories = ["api-bindings"]
+
+[dependencies]

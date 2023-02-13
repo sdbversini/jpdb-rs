@@ -7,5 +7,10 @@ homepage = "https://www.jpdb.io/"
 repository = "https://github.com/sdbversini/jpdb-rs"
 license = "MIT OR Apache-2.0"
 categories = ["api-bindings"]
+exclude = [".*", "*.md", "*.org", "LICENSE"]
 
 [dependencies]
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+# thiserror = "1.0.38"
+ureq = { version = "2.6", features = ["json", "gzip", "tls"]}

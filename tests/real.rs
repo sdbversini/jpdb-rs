@@ -21,6 +21,16 @@ fn jpdb_no_key() {
 }
 
 #[test]
+fn deleteme() {
+    let c = Client::new("ii");
+    let result = c.ping();
+    if let Err(jpdb::error::Error::BadKey(_)) = result {
+        println!("Do some error handling");
+    }
+    // assert_eq!(result.kind(), jpdb::error::ErrorKind::MissingKey);
+}
+
+#[test]
 fn jpdb_good_key() {
     let c = get_good_client();
     let result = c.ping();

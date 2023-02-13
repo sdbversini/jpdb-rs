@@ -1,9 +1,10 @@
-use std::time::Duration;
+use std::{fmt::Display, time::Duration};
 
 use ureq::{Agent, Error, Response};
 
 use crate::request::Request;
 
+#[derive(Debug, Clone)]
 pub struct Client {
     // TODO this might be redundant?
     _token: String,
@@ -75,5 +76,11 @@ impl Client {
         } else {
             request.send_json(prepared.body)
         }
+    }
+}
+
+impl Display for Client {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "jpdb client, token: {}", self.bearer)
     }
 }

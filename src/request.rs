@@ -6,13 +6,14 @@ use crate::{client::Client, error::Error};
 
 /// A request ready to be sent, users of the crate won't have to touch anything in here normally.
 #[derive(Debug)]
-pub struct Request {
+pub(crate) struct Request {
     /// The full URL that the request will be sent to, this includes the base URL and the API endpoint
     pub url: String,
     /// The body of the request
     pub body: serde_json::Value,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum AnyDeckWidget {
     DeckId(NonZeroU16),
     Blacklist,
@@ -37,9 +38,9 @@ impl serde::Serialize for AnyDeckWidget {
     }
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub struct UserDeckId(pub NonZeroU16);
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SpecialDeckId {
     Blacklist,
     NeverForget,

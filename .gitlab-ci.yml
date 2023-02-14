@@ -38,7 +38,9 @@ test:mock:junit-report:
     reports:
         junit: $CI_PROJECT_DIR/tests/*.xml
 
-# deploy:
-#   stage: deploy
-#   script: cargo publish
-#   environment: production
+deploy:
+  stage: deploy
+  script: cargo publish
+  environment: production
+  only:
+    - merge_requests

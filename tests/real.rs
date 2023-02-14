@@ -1,4 +1,4 @@
-use std::{env, num::NonZeroU16};
+use std::env;
 
 use jpdb::client::Client;
 
@@ -47,8 +47,14 @@ fn jpdb_clear_neverforget() {
 #[test]
 fn jpdb_clear_id() {
     let c = get_good_client();
-    let result = c.clear_deck(jpdb::request::UserDeckId(NonZeroU16::new(3).unwrap()));
+    let result = c.clear_deck(jpdb::request::UserDeckId(3));
     assert!(result.is_ok());
+}
+
+#[ignore]
+#[test]
+fn jpdb_create_delete_deck() {
+    // TODO create deck, get id, delete that id, list decks, verify it's not there
 }
 
 #[ignore]

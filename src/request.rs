@@ -88,4 +88,16 @@ impl Client {
         self.send_request(request)?;
         Ok(())
     }
+
+    pub fn rename_deck(&self, deck_id: UserDeckId, new_name: &str) -> Result<(), Error> {
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/delete"),
+            body: json!({
+                "id": deck_id.as_any(),
+                "name": new_name,
+            }),
+        };
+        self.send_request(request)?;
+        Ok(())
+    }
 }

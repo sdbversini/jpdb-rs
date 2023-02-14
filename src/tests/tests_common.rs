@@ -38,3 +38,10 @@ fn mock_delete_deck() {
     let resp = client.delete_deck(UserDeckId(1));
     assert!(resp.is_ok());
 }
+
+#[test]
+fn mock_rename_deck() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.rename_deck(UserDeckId(1), "asa");
+    assert!(resp.is_ok());
+}

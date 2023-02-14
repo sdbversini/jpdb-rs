@@ -50,8 +50,8 @@ deploy:
     - cargo login $CARGO_TOKEN 
     - cargo publish
   environment: production
-  rules:
-  - if: $CI_MERGE_REQUEST_APPROVED && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+  only:
+    - main
   needs:
     - job: read_secrets
       artifacts: true

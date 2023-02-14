@@ -5,6 +5,17 @@ image: "rust:latest"
 #    - rustc --version && cargo --version  # Print version info for debugging
 #    - cargo test --workspace --verbose
 
+read_secrets:
+  image: vault:latest
+  script:
+    - export VAULT_ADDR=$VAULT_SERVER_URL
+    - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=jpdb jwt=$CI_JOB_JWT)"
+    - export JPDB_TOKEN="$(vault kv get -field=dummy_api secret/jpdb)"
+    - echo "JPDB_TOKEN=$JPDB_TOKEN" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
 # Optional: Use a third party library to generate gitlab junit reports
 test:jpdb:junit-report:
   script:
@@ -14,6 +25,9 @@ test:jpdb:junit-report:
     when: always
     reports:
         junit: $CI_PROJECT_DIR/tests/*.xml
+  needs:
+    - job: read_secrets
+      artifacts: true
 
 test:mock:junit-report:
   script:
@@ -26,5 +40,5 @@ test:mock:junit-report:
 
 deploy:
   stage: deploy
-  script: TODO
+  script: cargo publish
   environment: production

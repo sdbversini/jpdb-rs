@@ -21,22 +21,13 @@ fn jpdb_no_key() {
 }
 
 #[test]
-fn deleteme() {
-    let c = Client::new("ii");
-    let result = c.ping();
-    if let Err(jpdb::error::Error::BadKey(_)) = result {
-        println!("Do some error handling");
-    }
-    // assert_eq!(result.kind(), jpdb::error::ErrorKind::MissingKey);
-}
-
-#[test]
 fn jpdb_good_key() {
     let c = get_good_client();
     let result = c.ping();
     assert!(result.is_ok());
 }
 
+#[ignore]
 #[test]
 fn jpdb_clear_blacklist() {
     let c = get_good_client();
@@ -44,6 +35,7 @@ fn jpdb_clear_blacklist() {
     assert!(result.is_ok());
 }
 
+#[ignore]
 #[test]
 fn jpdb_clear_neverforget() {
     let c = get_good_client();
@@ -51,6 +43,7 @@ fn jpdb_clear_neverforget() {
     assert!(result.is_ok());
 }
 
+#[ignore]
 #[test]
 fn jpdb_clear_id() {
     let c = get_good_client();

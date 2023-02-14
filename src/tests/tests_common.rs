@@ -31,3 +31,10 @@ fn mock_clear_deck_never_forget() {
     let resp = client.clear_deck(SpecialDeckId::NeverForget);
     assert!(resp.is_ok());
 }
+
+#[test]
+fn mock_delete_deck() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.delete_deck(UserDeckId(1));
+    assert!(resp.is_ok());
+}

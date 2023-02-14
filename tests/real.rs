@@ -53,6 +53,12 @@ fn jpdb_clear_id() {
 
 #[ignore]
 #[test]
+fn jpdb_create_delete_deck() {
+    // TODO create deck, get id, delete that id, list decks, verify it's not there
+}
+
+#[ignore]
+#[test]
 // TODO still not implemented server side
 // keep ignored, no need to spam the server with every test batch
 fn jpdb_429() {

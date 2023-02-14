@@ -57,6 +57,7 @@ impl AnyDeckId for SpecialDeckId {
         }
     }
 }
+
 impl Client {
     pub fn ping(&self) -> Result<(), Error> {
         let request = Request {
@@ -69,6 +70,17 @@ impl Client {
     pub fn clear_deck(&self, deck_id: impl AnyDeckId) -> Result<(), Error> {
         let request = Request {
             url: Client::create_url(self.base_url, "deck/clear"),
+            body: json!({
+                "id": deck_id.as_any(),
+            }),
+        };
+        self.send_request(request)?;
+        Ok(())
+    }
+
+    pub fn delete_deck(&self, deck_id: UserDeckId) -> Result<(), Error> {
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/delete"),
             body: json!({
                 "id": deck_id.as_any(),
             }),

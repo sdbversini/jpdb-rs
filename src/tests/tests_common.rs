@@ -1,6 +1,6 @@
 use crate::{
     client::Client,
-    request::{AnyDeckId, SpecialDeckId},
+    request::{SpecialDeckId, UserDeckId},
 };
 
 #[test]

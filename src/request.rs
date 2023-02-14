@@ -1,5 +1,3 @@
-use std::num::NonZeroU16;
-
 use serde_json::json;
 
 use crate::{client::Client, error::Error};
@@ -15,7 +13,7 @@ pub(crate) struct Request {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum AnyDeckWidget {
-    DeckId(NonZeroU16),
+    UserDeckId(u16),
     Blacklist,
     NeverForget,
 }
@@ -31,7 +29,7 @@ impl serde::Serialize for AnyDeckWidget {
         S: serde::Serializer,
     {
         match *self {
-            AnyDeckWidget::DeckId(x) => serializer.serialize_u16(x.get()),
+            AnyDeckWidget::UserDeckId(x) => serializer.serialize_u16(x),
             AnyDeckWidget::NeverForget => serializer.serialize_str("never-forget"),
             AnyDeckWidget::Blacklist => serializer.serialize_str("blacklist"),
         }
@@ -39,7 +37,7 @@ impl serde::Serialize for AnyDeckWidget {
 }
 
 #[derive(serde::Serialize, Debug, Clone, Copy, Eq, PartialEq)]
-pub struct UserDeckId(pub NonZeroU16);
+pub struct UserDeckId(pub u16);
 #[derive(serde::Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SpecialDeckId {
     Blacklist,
@@ -48,7 +46,7 @@ pub enum SpecialDeckId {
 
 impl AnyDeckId for UserDeckId {
     fn as_any(&self) -> AnyDeckWidget {
-        AnyDeckWidget::DeckId(self.0)
+        AnyDeckWidget::UserDeckId(self.0)
     }
 }
 impl AnyDeckId for SpecialDeckId {

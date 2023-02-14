@@ -11,7 +11,9 @@ read_secrets:
     - export VAULT_ADDR=$VAULT_SERVER_URL
     - export VAULT_TOKEN="$(vault write -field=token auth/jwt/login role=jpdb jwt=$CI_JOB_JWT)"
     - export JPDB_TOKEN="$(vault kv get -field=dummy_api secret/jpdb)"
+    - export CARGO_TOKEN="$(vault kv get -field=cargo secret/jpdb)"
     - echo "JPDB_TOKEN=$JPDB_TOKEN" >> build.env
+    - echo "CARGO_TOKEN=$CARGO_TOKEN" >> build.env
   artifacts:
     reports:
       dotenv: build.env
@@ -28,6 +30,8 @@ test:jpdb:junit-report:
   needs:
     - job: read_secrets
       artifacts: true
+  except:
+    - main
 
 test:mock:junit-report:
   script:
@@ -37,10 +41,17 @@ test:mock:junit-report:
     when: always
     reports:
         junit: $CI_PROJECT_DIR/tests/*.xml
+  except:
+    - main
 
 deploy:
   stage: deploy
-  script: cargo publish
+  script:
+    - cargo login $CARGO_TOKEN 
+    - cargo publish
   environment: production
-  only:
-    - merge_requests
+  rules:
+  - if: $CI_MERGE_REQUEST_APPROVED && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+  needs:
+    - job: read_secrets
+      artifacts: true

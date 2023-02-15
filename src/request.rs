@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use serde_json::json;
 
 use crate::{client::Client, error::Error};
@@ -14,7 +14,7 @@ pub(crate) struct Request {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum AnyDeckWidget {
-    UserDeckId(u16),
+    UserDeckId(u32),
     Blacklist,
     NeverForget,
 }
@@ -27,10 +27,10 @@ pub trait AnyDeckId {
 impl Serialize for AnyDeckWidget {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         match *self {
-            AnyDeckWidget::UserDeckId(x) => serializer.serialize_u16(x),
+            AnyDeckWidget::UserDeckId(x) => serializer.serialize_u32(x),
             AnyDeckWidget::NeverForget => serializer.serialize_str("never-forget"),
             AnyDeckWidget::Blacklist => serializer.serialize_str("blacklist"),
         }
@@ -38,11 +38,11 @@ impl Serialize for AnyDeckWidget {
 }
 
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Vid(pub u16);
+pub struct Vid(pub u32);
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Rid(pub u16);
+pub struct Rid(pub u32);
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Sid(pub u16);
+pub struct Sid(pub u32);
 
 type Vocabulary = (Vid, Sid);
 
@@ -74,7 +74,29 @@ impl Default for SetCardSentenceOptions<'_> {
 }
 
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
-pub struct UserDeckId(pub u16);
+pub struct AddVocabularyOptions<'a> {
+    pub vocabulary: &'a [Vocabulary],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub occurences: Option<&'a [u16]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overwrite_occurences: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_unknown: Option<bool>,
+}
+
+impl Default for AddVocabularyOptions<'_> {
+    fn default() -> Self {
+        Self {
+            vocabulary: &[],
+            occurences: None,
+            overwrite_occurences: None,
+            ignore_unknown: None,
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+pub struct UserDeckId(pub u32);
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SpecialDeckId {
     Blacklist,
@@ -101,6 +123,22 @@ impl Client {
             url: Client::create_url(self.base_url, "ping"),
             body: serde_json::Value::Null,
         };
+        self.send_request(request)?;
+        Ok(())
+    }
+
+    pub fn add_vocabulary(
+        &self,
+        deck_id: impl AnyDeckId,
+        options: &AddVocabularyOptions,
+    ) -> Result<(), Error> {
+        let mut body = json!(options).as_object_mut().unwrap().clone();
+        body.insert("id".to_string(), json!(deck_id.as_any()));
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/add-vocabulary"),
+            body: json!(body),
+        };
+        dbg!(&request);
         self.send_request(request)?;
         Ok(())
     }

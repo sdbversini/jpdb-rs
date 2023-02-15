@@ -1,6 +1,6 @@
 use crate::{
     client::Client,
-    request::{SetCardSentenceOptions, Sid, SpecialDeckId, UserDeckId, Vid},
+    request::{AddVocabularyOptions, SetCardSentenceOptions, Sid, SpecialDeckId, UserDeckId, Vid},
 };
 
 #[test]
@@ -96,6 +96,34 @@ fn mock_remove_blacklist() {
     let resp = client.remove_vocabulary(
         SpecialDeckId::Blacklist,
         &[(Vid(12), Sid(13)), (Vid(14), Sid(11))],
+    );
+    assert!(resp.is_ok());
+}
+
+#[test]
+fn mock_add_vocab_blacklist() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.add_vocabulary(
+        SpecialDeckId::Blacklist,
+        &AddVocabularyOptions {
+            vocabulary: &[(Vid(12), Sid(13)), (Vid(14), Sid(11))],
+            ..Default::default()
+        },
+    );
+    assert!(resp.is_ok());
+}
+
+#[test]
+fn mock_add_vocab_user() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.add_vocabulary(
+        UserDeckId(12),
+        &AddVocabularyOptions {
+            vocabulary: &[(Vid(12), Sid(13)), (Vid(14), Sid(11))],
+            occurences: Some(&[1, 1]),
+            overwrite_occurences: Some(true),
+            ignore_unknown: Some(false),
+        },
     );
     assert!(resp.is_ok());
 }

@@ -1,6 +1,6 @@
 use crate::{
     client::Client,
-    request::{SetCardSentenceOptions, SpecialDeckId, UserDeckId},
+    request::{SetCardSentenceOptions, Sid, SpecialDeckId, UserDeckId, Vid},
 };
 
 #[test]
@@ -65,10 +65,37 @@ fn mock_set_card_sentence() {
 fn mock_set_card_sentence_none() {
     let client = Client::new_mock("aaa", None);
     let options = SetCardSentenceOptions {
-        vid: crate::request::Vid(15),
-        sid: crate::request::Sid(15),
+        vid: Vid(15),
+        sid: Sid(15),
         ..Default::default()
     };
     let resp = client.set_card_sentence(&options);
+    assert!(resp.is_ok());
+}
+
+#[test]
+fn mock_remove_vocabulary() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.remove_vocabulary(UserDeckId(1), &[(Vid(12), Sid(13)), (Vid(14), Sid(11))]);
+    assert!(resp.is_ok());
+}
+
+#[test]
+fn mock_remove_neverforget() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.remove_vocabulary(
+        SpecialDeckId::NeverForget,
+        &[(Vid(12), Sid(13)), (Vid(14), Sid(11))],
+    );
+    assert!(resp.is_ok());
+}
+
+#[test]
+fn mock_remove_blacklist() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.remove_vocabulary(
+        SpecialDeckId::Blacklist,
+        &[(Vid(12), Sid(13)), (Vid(14), Sid(11))],
+    );
     assert!(resp.is_ok());
 }

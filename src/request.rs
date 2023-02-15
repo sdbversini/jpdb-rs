@@ -44,6 +44,8 @@ pub struct Rid(pub u16);
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Sid(pub u16);
 
+type Vocabulary = (Vid, Sid);
+
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub struct SetCardSentenceOptions<'a> {
     pub vid: Vid,
@@ -102,6 +104,23 @@ impl Client {
         self.send_request(request)?;
         Ok(())
     }
+
+    pub fn remove_vocabulary(
+        &self,
+        deck_id: impl AnyDeckId,
+        vocabulary: &[Vocabulary],
+    ) -> Result<(), Error> {
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/remove-vocabulary"),
+            body: json!({
+                "id": deck_id.as_any(),
+                "vocabulary": vocabulary,
+            }),
+        };
+        self.send_request(request)?;
+        Ok(())
+    }
+
     pub fn clear_deck(&self, deck_id: impl AnyDeckId) -> Result<(), Error> {
         let request = Request {
             url: Client::create_url(self.base_url, "deck/clear"),

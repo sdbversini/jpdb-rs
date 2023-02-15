@@ -1,6 +1,9 @@
 use crate::{
     client::Client,
-    request::{AddVocabularyOptions, SetCardSentenceOptions, Sid, SpecialDeckId, UserDeckId, Vid},
+    request::{
+        AddVocabularyOptions, DeckVocabulary, SetCardSentenceOptions, Sid, SpecialDeckId,
+        UserDeckId, Vid,
+    },
 };
 
 #[test]
@@ -126,4 +129,32 @@ fn mock_add_vocab_user() {
         },
     );
     assert!(resp.is_ok());
+}
+
+#[test]
+fn mock_list_vocabulary_raw_none() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.list_vocabulary_raw(UserDeckId(12), None);
+    assert!(resp.is_ok());
+    assert_eq!(
+        resp.unwrap(),
+        DeckVocabulary {
+            vocabulary: vec![vec![0]],
+            occurences: Some(vec![0])
+        }
+    )
+}
+
+#[test]
+fn mock_list_vocabulary_raw_some() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.list_vocabulary_raw(UserDeckId(12), Some(true));
+    assert!(resp.is_ok());
+    assert_eq!(
+        resp.unwrap(),
+        DeckVocabulary {
+            vocabulary: vec![vec![0]],
+            occurences: Some(vec![0])
+        }
+    )
 }

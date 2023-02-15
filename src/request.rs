@@ -1,4 +1,4 @@
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
 
 use crate::{client::Client, error::Error};
@@ -73,7 +73,7 @@ impl Default for SetCardSentenceOptions<'_> {
     }
 }
 
-#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Default, Debug, Clone, Copy, Eq, PartialEq)]
 pub struct AddVocabularyOptions<'a> {
     pub vocabulary: &'a [Vocabulary],
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -82,17 +82,6 @@ pub struct AddVocabularyOptions<'a> {
     pub overwrite_occurences: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown: Option<bool>,
-}
-
-impl Default for AddVocabularyOptions<'_> {
-    fn default() -> Self {
-        Self {
-            vocabulary: &[],
-            occurences: None,
-            overwrite_occurences: None,
-            ignore_unknown: None,
-        }
-    }
 }
 
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
@@ -117,6 +106,12 @@ impl AnyDeckId for SpecialDeckId {
     }
 }
 
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct DeckVocabulary {
+    pub vocabulary: Vec<Vec<u32>>,
+    pub occurences: Option<Vec<u32>>,
+}
+
 impl Client {
     pub fn ping(&self) -> Result<(), Error> {
         let request = Request {
@@ -124,6 +119,38 @@ impl Client {
             body: serde_json::Value::Null,
         };
         self.send_request(request)?;
+        Ok(())
+    }
+
+    pub fn list_vocabulary_raw(
+        &self,
+        deck_id: impl AnyDeckId,
+        fetch_occurence: Option<bool>,
+    ) -> Result<DeckVocabulary, Error> {
+        // TODO remove fetch_occurence from body if None
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/list-vocabulary"),
+            body: json!({
+                "id": deck_id.as_any(),
+                "fetch_occurence": fetch_occurence
+            }),
+        };
+        let response = self
+            .send_request(request)?
+            .into_json::<DeckVocabulary>()
+            .map_err(Error::DeserializeError)?;
+        Ok(response)
+    }
+
+    pub fn list_vocabulary(
+        &self,
+        deck_id: impl AnyDeckId,
+        fetch_occurence: Option<bool>,
+    ) -> Result<(), Error> {
+        if let Ok(_raw) = self.list_vocabulary_raw(deck_id, fetch_occurence) {
+            //TODO turn into raw
+            // dolater when we know the proper structure
+        }
         Ok(())
     }
 
@@ -138,7 +165,6 @@ impl Client {
             url: Client::create_url(self.base_url, "deck/add-vocabulary"),
             body: json!(body),
         };
-        dbg!(&request);
         self.send_request(request)?;
         Ok(())
     }

@@ -1,6 +1,9 @@
 use std::env;
 
-use jpdb::client::Client;
+use jpdb::{
+    client::Client,
+    request::{DeckVocabulary, UserDeckId},
+};
 
 fn get_good_client() -> Client {
     Client::new(&env::var("JPDB_TOKEN").unwrap_or_else(|_| String::from("")))
@@ -69,4 +72,20 @@ fn jpdb_429() {
         dbg!(&result);
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
+}
+
+#[ignore]
+#[test]
+// TODO test occurence none when false
+fn jpdb_list_vocabulary_raw_some_false() {
+    let c = get_good_client();
+    let resp = c.list_vocabulary_raw(UserDeckId(12), Some(false));
+    assert!(resp.is_ok());
+    assert_eq!(
+        resp.unwrap(),
+        DeckVocabulary {
+            vocabulary: vec![vec![0]],
+            occurences: None,
+        }
+    )
 }

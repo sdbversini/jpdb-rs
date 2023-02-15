@@ -21,6 +21,7 @@ pub enum Error {
     BadRequest(String),
     BadSentence(String),
     BadTranslation(String),
+    DeserializeError(std::io::Error),
     Transport(ureq::Transport),
     Unhandled(u16, RawError),
 }
@@ -44,6 +45,7 @@ pub enum ErrorKind {
     TooManyCardsInDeck,
     TooManyCardsTotal,
     Transport,
+    DeserializeError,
     Unhandled,
 }
 
@@ -74,6 +76,7 @@ impl Error {
             Error::BadAudio(_) => ErrorKind::BadAudio,
             Error::BadSentence(_) => ErrorKind::BadSentence,
             Error::BadTranslation(_) => ErrorKind::BadTranslation,
+            Error::DeserializeError(_) => ErrorKind::DeserializeError,
         }
     }
 }
@@ -82,6 +85,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             Error::Transport(ref source) => Some(source),
+            Error::DeserializeError(ref source) => Some(source),
             _ => None,
         }
     }
@@ -115,6 +119,7 @@ impl std::fmt::Display for Error {
                 "The sentence is too long, or the given vocabulary was not found in it. {s}"
             ),
             Error::BadTranslation(ref s) => write!(f, "The translation is too long. {s}"),
+            Error::DeserializeError(ref s) => s.fmt(f),
         }
     }
 }

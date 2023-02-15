@@ -1,3 +1,4 @@
+use serde::Serialize;
 use serde_json::json;
 
 use crate::{client::Client, error::Error};
@@ -23,7 +24,7 @@ pub trait AnyDeckId {
     fn as_any(&self) -> AnyDeckWidget;
 }
 
-impl serde::Serialize for AnyDeckWidget {
+impl Serialize for AnyDeckWidget {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -36,9 +37,43 @@ impl serde::Serialize for AnyDeckWidget {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+pub struct Vid(pub u16);
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+pub struct Rid(pub u16);
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+pub struct Sid(pub u16);
+
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+pub struct SetCardSentenceOptions<'a> {
+    pub vid: Vid,
+    pub sid: Sid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sentence: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub translation: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clear_audio: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub clear_image: Option<bool>,
+}
+
+impl Default for SetCardSentenceOptions<'_> {
+    fn default() -> Self {
+        Self {
+            vid: Vid(0),
+            sid: Sid(0),
+            sentence: None,
+            translation: None,
+            clear_audio: None,
+            clear_image: None,
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub struct UserDeckId(pub u16);
-#[derive(serde::Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SpecialDeckId {
     Blacklist,
     NeverForget,
@@ -96,6 +131,15 @@ impl Client {
                 "id": deck_id.as_any(),
                 "name": new_name,
             }),
+        };
+        self.send_request(request)?;
+        Ok(())
+    }
+
+    pub fn set_card_sentence(&self, options: &SetCardSentenceOptions) -> Result<(), Error> {
+        let request = Request {
+            url: Client::create_url(self.base_url, "set-card-sentence"),
+            body: json!(options),
         };
         self.send_request(request)?;
         Ok(())

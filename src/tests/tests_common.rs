@@ -158,3 +158,20 @@ fn mock_list_vocabulary_raw_some() {
         }
     )
 }
+
+#[test]
+fn mock_create_deck() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.create_empty_deck("baba", None);
+    dbg!(&resp);
+    assert!(resp.is_ok());
+    assert_eq!(resp.unwrap(), UserDeckId(0))
+}
+
+#[test]
+fn mock_create_deck_some() {
+    let client = Client::new_mock("aaa", None);
+    let resp = client.create_empty_deck("baba", Some(1));
+    assert!(resp.is_ok());
+    assert_eq!(resp.unwrap(), UserDeckId(0))
+}

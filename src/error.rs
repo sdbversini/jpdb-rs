@@ -128,7 +128,14 @@ impl From<ureq::Error> for Error {
     fn from(r: ureq::Error) -> Self {
         match r {
             ureq::Error::Status(code, response) => {
-                let raw = response.into_json::<RawError>().unwrap();
+                //TODO improve this
+                let raw = response
+                    .into_json::<RawError>()
+                    .map_err(Error::DeserializeError);
+                if let Err(e) = raw {
+                    return e;
+                }
+                let raw = raw.unwrap();
 
                 match code {
                     403 => {

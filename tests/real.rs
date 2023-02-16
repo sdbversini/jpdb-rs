@@ -89,3 +89,20 @@ fn jpdb_list_vocabulary_raw_some_false() {
         }
     )
 }
+
+#[ignore]
+#[test]
+fn jpdb_create_empty_deck_no_name() {
+    let c = get_good_client();
+    let resp = c.create_empty_deck("", None);
+    assert!(resp.is_ok());
+}
+
+#[ignore]
+#[test]
+fn jpdb_create_empty_deck_huge_position() {
+    let c = get_good_client();
+    let resp = c.create_empty_deck("baba", Some(200));
+    assert!(resp.is_ok());
+    dbg!(resp.unwrap());
+}

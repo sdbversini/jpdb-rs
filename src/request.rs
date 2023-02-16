@@ -14,7 +14,7 @@ pub(crate) struct Request {
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum AnyDeckWidget {
-    UserDeckId(u32),
+    UserDeckId(u8),
     Blacklist,
     NeverForget,
 }
@@ -30,7 +30,7 @@ impl Serialize for AnyDeckWidget {
         S: Serializer,
     {
         match *self {
-            AnyDeckWidget::UserDeckId(x) => serializer.serialize_u32(x),
+            AnyDeckWidget::UserDeckId(x) => serializer.serialize_u8(x),
             AnyDeckWidget::NeverForget => serializer.serialize_str("never-forget"),
             AnyDeckWidget::Blacklist => serializer.serialize_str("blacklist"),
         }
@@ -85,7 +85,7 @@ pub struct AddVocabularyOptions<'a> {
 }
 
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
-pub struct UserDeckId(pub u32);
+pub struct UserDeckId(pub u8);
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub enum SpecialDeckId {
     Blacklist,
@@ -110,6 +110,17 @@ impl AnyDeckId for SpecialDeckId {
 pub struct DeckVocabulary {
     pub vocabulary: Vec<Vec<u32>>,
     pub occurences: Option<Vec<u32>>,
+}
+
+#[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
+struct CreateEmptyDeckResponse {
+    id: u8,
+}
+
+impl From<CreateEmptyDeckResponse> for UserDeckId {
+    fn from(x: CreateEmptyDeckResponse) -> Self {
+        Self(x.id)
+    }
 }
 
 impl Client {
@@ -142,16 +153,32 @@ impl Client {
         Ok(response)
     }
 
+    pub fn create_empty_deck(&self, name: &str, position: Option<u8>) -> Result<UserDeckId, Error> {
+        let body = if let Some(p) = position {
+            json!({"name": name, "position": position})
+        } else {
+            json!({ "name": name })
+        };
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/create-empty"),
+            body,
+        };
+        let response = self
+            .send_request(request)?
+            .into_json::<CreateEmptyDeckResponse>()
+            .map_err(Error::DeserializeError)?;
+        Ok(response.into())
+    }
+
     pub fn list_vocabulary(
         &self,
         deck_id: impl AnyDeckId,
         fetch_occurence: Option<bool>,
     ) -> Result<(), Error> {
-        if let Ok(_raw) = self.list_vocabulary_raw(deck_id, fetch_occurence) {
-            //TODO turn into raw
-            // dolater when we know the proper structure
-        }
-        Ok(())
+        let _raw = self.list_vocabulary_raw(deck_id, fetch_occurence)?;
+        //TODO turn into raw
+        // dolater when we know the proper structure
+        unimplemented!("unimplemented for now, waiting for API release to handle correctly");
     }
 
     pub fn add_vocabulary(

@@ -23,12 +23,22 @@ fn main() {
 
     // That's about it! Read the docs for all available endpoints, and the error they'd return.
 
+    // Some endpoints are a little more complicated, so they take in a struct as argument
+    client.set_card_sentence(&SetCardSentenceOptions{
+        vid: Vid(12),
+        sid: Sid(10),
+        clear_audio: Some(true),
+        ..Default::default()
+    });
+
 }
 ```
 
+For more info, refer to [this project](https://github.com/sdbversini/jpdb-tools) for practical use.
+
 ## Semantic Versioning
 
-Like all good rust crates, `jpdb` uses semantic versioning. The rationale is the following, for X.Y.Z:
+Like all rust crates are advised to, `jpdb` uses semantic versioning. The rationale is the following, for X.Y.Z:
 
 - X represents the jpdb api version, eg. "/api/vX/ping". Expect this to stay at 1 indefinitely.
 - Y represents breaking or semi-breaking changes, for instance, new or changed error types, new struct fields, renamed functions, and so on. A Changelog will be updated to reflect changes and help transition.

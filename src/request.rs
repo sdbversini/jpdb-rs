@@ -133,6 +133,23 @@ impl Client {
         Ok(())
     }
 
+    pub fn create_empty_deck(&self, name: &str, position: Option<u8>) -> Result<UserDeckId, Error> {
+        let body = if let Some(p) = position {
+            json!({"name": name, "position": position})
+        } else {
+            json!({ "name": name })
+        };
+        let request = Request {
+            url: Client::create_url(self.base_url, "deck/create-empty"),
+            body,
+        };
+        let response = self
+            .send_request(request)?
+            .into_json::<CreateEmptyDeckResponse>()
+            .map_err(Error::DeserializeError)?;
+        Ok(response.into())
+    }
+
     pub fn list_vocabulary_raw(
         &self,
         deck_id: impl AnyDeckId,
@@ -151,23 +168,6 @@ impl Client {
             .into_json::<DeckVocabulary>()
             .map_err(Error::DeserializeError)?;
         Ok(response)
-    }
-
-    pub fn create_empty_deck(&self, name: &str, position: Option<u8>) -> Result<UserDeckId, Error> {
-        let body = if let Some(p) = position {
-            json!({"name": name, "position": position})
-        } else {
-            json!({ "name": name })
-        };
-        let request = Request {
-            url: Client::create_url(self.base_url, "deck/create-empty"),
-            body,
-        };
-        let response = self
-            .send_request(request)?
-            .into_json::<CreateEmptyDeckResponse>()
-            .map_err(Error::DeserializeError)?;
-        Ok(response.into())
     }
 
     pub fn list_vocabulary(

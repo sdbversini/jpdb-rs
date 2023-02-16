@@ -157,8 +157,11 @@ impl From<ureq::Error> for Error {
                             Error::TooManyRequests(raw.error_message)
                         }
                     }
-                    400 => match raw.error_message.as_str() {
+                    400 => match raw.error.as_str() {
                         "bad_request" => Error::BadRequest(raw.error_message),
+                        "bad_deck" => Error::BadDeck(raw.error_message),
+                        "bad_sid" => Error::BadSid(raw.error_message),
+                        "bad_vid" => Error::BadVid(raw.error_message),
                         _ => Error::Unhandled(code, raw),
                     },
                     _ => Error::Unhandled(code, raw),

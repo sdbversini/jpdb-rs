@@ -79,6 +79,7 @@ pub struct AddVocabularyOptions<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub occurences: Option<&'a [u16]>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "replace_existing_occurences")]
     pub overwrite_occurences: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_unknown: Option<bool>,
@@ -407,19 +408,21 @@ impl Client {
 
     pub fn rename_deck(&self, deck_id: UserDeckId, new_name: &str) -> Result<(), Error> {
         let request = Request {
-            url: Client::create_url(self.base_url, "deck/delete"),
+            url: Client::create_url(self.base_url, "deck/rename"),
             body: json!({
                 "id": deck_id.as_any(),
                 "name": new_name,
             }),
         };
+        dbg!(&request);
         self.send_request(request)?;
         Ok(())
     }
 
     pub fn set_card_sentence(&self, options: &SetCardSentenceOptions) -> Result<(), Error> {
+        //TODO change the url in next jpdb patch
         let request = Request {
-            url: Client::create_url(self.base_url, "set-card-sentence"),
+            url: Client::create_url(self.base_url, "deck/set-card-sentence"),
             body: json!(options),
         };
         self.send_request(request)?;

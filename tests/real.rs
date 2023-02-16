@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, time::Duration};
 
 use jpdb::{
     client::Client,
@@ -6,6 +6,7 @@ use jpdb::{
 };
 
 fn get_good_client() -> Client {
+    std::thread::sleep(Duration::from_secs(5));
     Client::new(&env::var("JPDB_TOKEN").unwrap_or_else(|_| String::from("")))
 }
 
@@ -106,3 +107,7 @@ fn jpdb_create_empty_deck_huge_position() {
     assert!(resp.is_ok());
     dbg!(resp.unwrap());
 }
+
+//TODO test list-special-decks
+// - no fields
+// - duplicated fields

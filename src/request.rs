@@ -123,6 +123,79 @@ impl From<CreateEmptyDeckResponse> for UserDeckId {
     }
 }
 
+#[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DeckQueryField {
+    #[serde(rename = "id")]
+    Id,
+    #[serde(rename = "name")]
+    Name,
+    #[serde(rename = "vocabulary_count")]
+    VocabularyCount,
+    #[serde(rename = "word_count")]
+    WordCount,
+    #[serde(rename = "vocabulary_known_coverage")]
+    KnownCoverage,
+    #[serde(rename = "vocabulary_in_progress_coverage")]
+    InProgressCoverage,
+    #[serde(rename = "is_built_in")]
+    IsBuiltIn,
+}
+
+#[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum VocabQueryField {
+    #[serde(rename = "vid")]
+    Vid,
+    #[serde(rename = "sid")]
+    Sid,
+    #[serde(rename = "rid")]
+    Rid,
+    #[serde(rename = "spelling")]
+    Spelling,
+    #[serde(rename = "reading")]
+    Reading,
+    #[serde(rename = "frequency_rank")]
+    FrequencyRank,
+    #[serde(rename = "meanings")]
+    Meanings,
+    #[serde(rename = "card_level")]
+    CardLevel,
+    #[serde(rename = "card_state")]
+    CardState,
+    #[serde(rename = "due_at")]
+    DueAt,
+}
+
+//TODO remove utf32?
+#[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum TokenQueryField {
+    #[serde(rename = "vocabulary_index")]
+    VocabIndex,
+    #[serde(rename = "position_utf8")]
+    PositionUtf8,
+    #[serde(rename = "position_utf32")]
+    PositionUtf32,
+    #[serde(rename = "length_utf8")]
+    LengthUtf8,
+    #[serde(rename = "length_utf32")]
+    LengthUtf32,
+    #[serde(rename = "furigana")]
+    Furigana,
+}
+
+pub enum DeckTypeToList {
+    UserDecks,
+    SpecialDecks,
+}
+
+impl DeckTypeToList {
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            DeckTypeToList::UserDecks => "list-user-decks",
+            DeckTypeToList::SpecialDecks => "list-special-decks",
+        }
+    }
+}
+
 impl Client {
     pub fn ping(&self) -> Result<(), Error> {
         let request = Request {
@@ -133,9 +206,107 @@ impl Client {
         Ok(())
     }
 
+    pub fn parse_text(
+        &self,
+        text: &str,
+        token_fields: &[TokenQueryField],
+        vocab_fields: Option<&[VocabQueryField]>,
+    ) -> Result<(), Error> {
+        let mut token_fields = token_fields.to_vec();
+        // fields.sort(); // TODO?
+        token_fields.dedup();
+
+        let body = if let Some(fields) = vocab_fields {
+            let mut vocab_fields = fields.to_vec();
+            // fields.sort(); // TODO?
+            vocab_fields.dedup();
+            json!({
+                "text": text,
+                "token_fields": token_fields,
+                "vocabulary_fields": vocab_fields,
+            })
+        } else {
+            json!({
+                "text": text,
+                "token_fields": token_fields,
+            })
+        };
+
+        let request = Request {
+            url: Client::create_url(self.base_url, "parse"),
+            body,
+        };
+        let response = self
+            .send_request(request)?
+            .into_json::<serde_json::Value>()
+            .map_err(Error::DeserializeError)?;
+        dbg!(response);
+        //TODO deserialize
+        unimplemented!()
+    }
+
+    pub fn lookup_vocabulary(
+        &self,
+        list: &[(Vid, Sid)],
+        fields: &[VocabQueryField],
+    ) -> Result<(), Error> {
+        let mut fields = fields.to_vec();
+        // fields.sort(); // TODO?
+        fields.dedup();
+        let request = Request {
+            url: Client::create_url(self.base_url, "lookup-vocabulary"),
+            body: json! ({
+                "list": list,
+                "fields": fields,
+            }),
+        };
+        let _response = self
+            .send_request(request)?
+            .into_json::<serde_json::Value>()
+            .map_err(Error::DeserializeError)?;
+        //TODO deserialize
+        unimplemented!()
+    }
+
+    pub fn list_decks_raw(
+        &self,
+        fields: &[DeckQueryField],
+        deck_type: DeckTypeToList,
+    ) -> Result<(), Error> {
+        let mut fields = fields.to_vec();
+        // fields.sort(); // TODO?
+        fields.dedup();
+        let _request = Request {
+            url: Client::create_url(self.base_url, deck_type.as_str()),
+            body: json! ({
+                "fields": fields,
+            }),
+        };
+        // TODO destructure the reply
+        unimplemented!();
+        // Ok(())
+    }
+
+    pub fn list_special_decks(&self, fields: &[DeckQueryField]) -> Result<(), Error> {
+        let _decks = self.list_decks_raw(fields, DeckTypeToList::SpecialDecks)?;
+        unimplemented!();
+        // Ok(())
+    }
+
+    pub fn list_user_decks(&self, fields: &[DeckQueryField]) -> Result<(), Error> {
+        let _decks = self.list_decks_raw(fields, DeckTypeToList::UserDecks)?;
+        unimplemented!();
+        // Ok(())
+    }
+
+    pub fn list_all_decks(&self, _fields: &[DeckQueryField]) -> Result<(), Error> {
+        unimplemented!();
+        // Ok(())
+    }
+
     pub fn create_empty_deck(&self, name: &str, position: Option<u8>) -> Result<UserDeckId, Error> {
         let body = if let Some(p) = position {
-            json!({"name": name, "position": position})
+            json!({"name": name, "position": p})
         } else {
             json!({ "name": name })
         };

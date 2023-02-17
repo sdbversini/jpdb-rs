@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
 
@@ -37,15 +39,62 @@ impl Serialize for AnyDeckWidget {
     }
 }
 
-#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[serde(from = "u32")]
 pub struct Vid(pub u32);
-#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[serde(from = "u32")]
 pub struct Rid(pub u32);
-#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[serde(from = "u32")]
 pub struct Sid(pub u32);
 
-type Vocabulary = (Vid, Sid);
+impl From<u32> for Vid {
+    fn from(x: u32) -> Self {
+        Self(x)
+    }
+}
 
+impl From<u32> for Sid {
+    fn from(x: u32) -> Self {
+        Self(x)
+    }
+}
+
+impl From<u32> for Rid {
+    fn from(x: u32) -> Self {
+        Self(x)
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash, Copy, Clone, Debug)]
+pub struct Vocabulary(pub u32, pub u32);
+
+impl From<(u32, u32)> for Vocabulary {
+    fn from(x: (u32, u32)) -> Self {
+        Vocabulary(x.0, x.1)
+    }
+}
+
+impl From<Sid> for u32 {
+    fn from(x: Sid) -> Self {
+        x.0
+    }
+}
+
+impl From<Vid> for u32 {
+    fn from(x: Vid) -> Self {
+        x.0
+    }
+}
+
+impl From<(Vid, Sid)> for Vocabulary {
+    fn from(x: (Vid, Sid)) -> Self {
+        Vocabulary(x.0.into(), x.1.into())
+    }
+}
+
+//TODO option this in functions? setcardsentence takes vocab instead
 #[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
 pub struct SetCardSentenceOptions<'a> {
     pub vid: Vid,
@@ -109,7 +158,7 @@ impl AnyDeckId for SpecialDeckId {
 
 #[derive(Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct DeckVocabulary {
-    pub vocabulary: Vec<Vec<u32>>,
+    pub vocabulary: Vec<Vocabulary>,
     pub occurences: Option<Vec<u32>>,
 }
 
@@ -327,13 +376,19 @@ impl Client {
         deck_id: impl AnyDeckId,
         fetch_occurence: Option<bool>,
     ) -> Result<DeckVocabulary, Error> {
-        // TODO remove fetch_occurence from body if None
+        let body = if let Some(fetch) = fetch_occurence {
+            json!({
+                "id": deck_id.as_any(),
+                "fetch_occurences": fetch,
+            })
+        } else {
+            json!({
+                "id": deck_id.as_any()
+            })
+        };
         let request = Request {
             url: Client::create_url(self.base_url, "deck/list-vocabulary"),
-            body: json!({
-                "id": deck_id.as_any(),
-                "fetch_occurence": fetch_occurence
-            }),
+            body,
         };
         let response = self
             .send_request(request)?
@@ -342,15 +397,23 @@ impl Client {
         Ok(response)
     }
 
-    pub fn list_vocabulary(
+    pub fn list_vocabulary(&self, deck_id: impl AnyDeckId) -> Result<Vec<Vocabulary>, Error> {
+        let raw = self.list_vocabulary_raw(deck_id, None)?;
+        Ok(raw.vocabulary)
+    }
+
+    pub fn list_vocabulary_with_occurences(
         &self,
         deck_id: impl AnyDeckId,
-        fetch_occurence: Option<bool>,
-    ) -> Result<(), Error> {
-        let _raw = self.list_vocabulary_raw(deck_id, fetch_occurence)?;
-        //TODO turn into raw
-        // dolater when we know the proper structure
-        unimplemented!("unimplemented for now, waiting for API release to handle correctly");
+    ) -> Result<HashMap<Vocabulary, u32>, Error> {
+        let raw = self.list_vocabulary_raw(deck_id, Some(true))?;
+        let Some(occurences) = raw.occurences else {
+            // return Err(Error::DeserializeError(String::from("asked for occurences but the server didn't return them. This error shouldn't be happening.")));
+            panic!("todo change me fix above pleaseeee");
+        };
+        let mut map = HashMap::<Vocabulary, u32>::new();
+        map.extend(raw.vocabulary.iter().zip(occurences.iter()));
+        Ok(map)
     }
 
     pub fn add_vocabulary(
@@ -419,6 +482,7 @@ impl Client {
         Ok(())
     }
 
+    //TODO change, take vocab, options is optional
     pub fn set_card_sentence(&self, options: &SetCardSentenceOptions) -> Result<(), Error> {
         //TODO change the url in next jpdb patch
         let request = Request {

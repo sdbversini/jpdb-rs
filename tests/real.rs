@@ -5,7 +5,7 @@ use jpdb::{
     error::ErrorKind,
     request::{
         AddVocabularyOptions, DeckQueryField, DeckVocabulary, SetCardSentenceOptions, Sid,
-        UserDeckId, Vid,
+        UserDeckId, Vid, Vocabulary,
     },
 };
 
@@ -83,22 +83,6 @@ fn jpdb_delete_deck() {
 //     }
 // }
 
-#[ignore]
-#[test]
-// TODO test occurence none when false
-fn jpdb_list_vocabulary_raw_some_false() {
-    let c = get_good_client();
-    let resp = c.list_vocabulary_raw(UserDeckId(12), Some(false));
-    assert!(resp.is_ok());
-    assert_eq!(
-        resp.unwrap(),
-        DeckVocabulary {
-            vocabulary: vec![vec![0]],
-            occurences: None,
-        }
-    )
-}
-
 #[test]
 fn jpdb_create_empty_deck_no_name() {
     let c = get_good_client();
@@ -134,7 +118,7 @@ fn jpdb_add_vocabulary() {
     let resp = c.add_vocabulary(
         UserDeckId(7),
         &AddVocabularyOptions {
-            vocabulary: &[(Vid(1358280), Sid(1232985445))],
+            vocabulary: &[Vocabulary(1358280, 1232985445)],
             occurences: Some(&[10]),
             overwrite_occurences: Some(true),
             ignore_unknown: Some(true),
@@ -149,7 +133,7 @@ fn jpdb_add_vocabulary_too_many() {
     let resp = c.add_vocabulary(
         UserDeckId(7),
         &AddVocabularyOptions {
-            vocabulary: &[(Vid(1358280), Sid(1232985445))],
+            vocabulary: &[Vocabulary(1358280, 1232985445)],
             occurences: Some(&[10, 15]),
             overwrite_occurences: Some(true),
             ignore_unknown: Some(true),
@@ -164,7 +148,7 @@ fn jpdb_add_vocabulary_ignore() {
     let resp = c.add_vocabulary(
         UserDeckId(7),
         &AddVocabularyOptions {
-            vocabulary: &[(Vid(1358280), Sid(1))],
+            vocabulary: &[Vocabulary(1358280, 1)],
             occurences: Some(&[15]),
             overwrite_occurences: Some(true),
             ignore_unknown: Some(false),
@@ -176,7 +160,7 @@ fn jpdb_add_vocabulary_ignore() {
     let resp = c.add_vocabulary(
         UserDeckId(7),
         &AddVocabularyOptions {
-            vocabulary: &[(Vid(1358280), Sid(1))],
+            vocabulary: &[Vocabulary(1358280, 1)],
             occurences: Some(&[15]),
             overwrite_occurences: Some(true),
             ignore_unknown: Some(true),
@@ -187,7 +171,7 @@ fn jpdb_add_vocabulary_ignore() {
 
 #[test]
 fn jpdb_add_remove_vocabulary() {
-    let word = (Vid(1555480), Sid(2996971705));
+    let word = Vocabulary(1555480, 2996971705);
     let c = get_good_client();
     let resp = c.add_vocabulary(
         UserDeckId(7),
@@ -206,7 +190,7 @@ fn jpdb_add_remove_vocabulary() {
 #[ignore]
 #[test]
 fn jpdb_remove_vocabulary() {
-    let word = (Vid(2028920), Sid(2204744690));
+    let word = Vocabulary(2028920, 2204744690);
     let c = get_good_client();
     let resp = c.remove_vocabulary(UserDeckId(7), &[word]);
     assert!(resp.is_ok());
@@ -223,6 +207,40 @@ fn jpdb_set_card_sentence() {
         clear_audio: None,
         clear_image: None,
     });
+    dbg!(&resp);
+    assert!(&resp.is_ok());
+}
+
+#[test]
+fn jpdb_list_vocabulary_raw() {
+    let c = get_good_client();
+    let resp = c.list_vocabulary_raw(UserDeckId(13), None);
+    dbg!(&resp);
+    assert!(&resp.is_ok());
+    assert!(resp.unwrap().occurences.is_none());
+}
+
+#[test]
+fn jpdb_list_vocabulary_raw_occur() {
+    let c = get_good_client();
+    let resp = c.list_vocabulary_raw(UserDeckId(13), Some(true));
+    dbg!(&resp);
+    assert!(&resp.is_ok());
+    assert!(resp.unwrap().occurences.is_some());
+}
+
+#[test]
+fn jpdb_list_vocabulary() {
+    let c = get_good_client();
+    let resp = c.list_vocabulary(UserDeckId(13));
+    dbg!(&resp);
+    assert!(&resp.is_ok());
+}
+
+#[test]
+fn jpdb_list_vocabulary_with_occurences() {
+    let c = get_good_client();
+    let resp = c.list_vocabulary_with_occurences(UserDeckId(12));
     dbg!(&resp);
     assert!(&resp.is_ok());
 }
